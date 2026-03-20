@@ -1,0 +1,208 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Design Tokens ──────────────────────────────────────────────────────────── */
+
+@layer base {
+  /* Light mode — clean, airy */
+  :root {
+    --background: 213 31% 97%;
+    --foreground: 222 47% 11%;
+
+    --surface: 0 0% 100%;
+    --surface-hover: 210 40% 96%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --primary: 234 89% 54%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 40% 94%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 210 40% 94%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 234 89% 54%;
+    --accent-foreground: 0 0% 100%;
+
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 234 89% 54%;
+
+    --radius: 0.75rem;
+  }
+
+  /* Dark mode — deep navy, glass surfaces */
+  .dark {
+    --background: 222 47% 7%;
+    --foreground: 213 31% 91%;
+
+    --surface: 222 47% 11%;
+    --surface-hover: 217 33% 15%;
+
+    --card: 222 47% 10%;
+    --card-foreground: 213 31% 91%;
+
+    --primary: 234 89% 74%;
+    --primary-foreground: 234 60% 15%;
+
+    --secondary: 217 33% 15%;
+    --secondary-foreground: 213 31% 91%;
+
+    --muted: 223 47% 14%;
+    --muted-foreground: 215 20% 55%;
+
+    --accent: 234 89% 74%;
+    --accent-foreground: 222 47% 7%;
+
+    --border: 217 33% 14%;
+    --input: 217 33% 14%;
+    --ring: 234 89% 74%;
+  }
+}
+
+/* ─── Base Styles ────────────────────────────────────────────────────────────── */
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+  }
+
+  /* Typography scale */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    @apply w-1.5 h-1.5;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-border;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/30;
+  }
+
+  /* Focus ring */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+}
+
+/* ─── Component Classes ──────────────────────────────────────────────────────── */
+
+@layer components {
+  /* Glass morphism card */
+  .glass-card {
+    @apply
+      relative rounded-xl
+      border border-white/10
+      bg-white/5 dark:bg-slate-900/40
+      backdrop-blur-md
+      shadow-glass
+      transition-all duration-200 ease-out;
+  }
+
+  .glass-card-hover {
+    @apply glass-card hover:-translate-y-0.5 hover:border-white/20 hover:shadow-glow-sm hover:bg-white/10 dark:hover:bg-slate-900/60;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    @apply
+      inline-flex items-center justify-center gap-2
+      rounded-lg px-5 py-2.5
+      text-sm font-semibold
+      bg-primary text-primary-foreground
+      shadow-sm shadow-primary/20
+      transition-all duration-200 ease-out
+      hover:opacity-90 hover:shadow-glow-sm
+      active:scale-[0.97]
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring;
+  }
+
+  .btn-secondary {
+    @apply
+      inline-flex items-center justify-center gap-2
+      rounded-lg px-5 py-2.5
+      text-sm font-semibold
+      border border-white/15 bg-white/5
+      backdrop-blur-sm
+      transition-all duration-200 ease-out
+      hover:bg-white/10 hover:border-white/25
+      active:scale-[0.97]
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring;
+  }
+
+  .btn-ghost {
+    @apply
+      inline-flex items-center justify-center gap-2
+      rounded-lg px-4 py-2
+      text-sm font-medium text-muted-foreground
+      transition-all duration-200 ease-out
+      hover:bg-white/10 hover:text-foreground
+      active:scale-[0.97];
+  }
+
+  /* Badge */
+  .badge {
+    @apply
+      inline-flex items-center gap-1.5
+      rounded-full border border-white/10
+      bg-white/5 px-3 py-1
+      text-xs font-medium text-muted-foreground
+      backdrop-blur-sm;
+  }
+
+  /* Input */
+  .input {
+    @apply
+      w-full rounded-lg border border-input
+      bg-surface px-3 py-2
+      text-sm placeholder:text-muted-foreground
+      transition-all duration-200
+      focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent;
+  }
+
+  /* Gradient text */
+  .gradient-text-primary {
+    @apply bg-gradient-to-r from-indigo-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent;
+  }
+
+  .gradient-text-white {
+    @apply bg-gradient-to-b from-white to-slate-400 bg-clip-text text-transparent;
+  }
+
+  /* Section container */
+  .container-page {
+    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+}
+
+/* ─── Utilities ──────────────────────────────────────────────────────────────── */
+
+@layer utilities {
+  .bg-noise {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  }
+
+  .glow-indigo {
+    box-shadow: 0 0 80px -20px rgba(99, 102, 241, 0.4);
+  }
+}
