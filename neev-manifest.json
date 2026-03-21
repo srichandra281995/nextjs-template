@@ -1,0 +1,27 @@
+{
+  "version": "1.0.0",
+  "stack": {
+    "framework": "nextjs",
+    "frameworkVersion": "15",
+    "auth": "clerk",
+    "database": "supabase",
+    "styling": "tailwind"
+  },
+  "fileManifest": {
+    "app/globals.css": "Global CSS variables, design tokens, glass morphism utility classes (.glass-card, .glass-card-hover, .btn-primary, .btn-secondary), animation keyframes, dark/light mode CSS variables",
+    "app/layout.tsx": "Root layout wrapping app with ClerkProvider, Inter font via next/font, dark mode class on html element, metadata title template",
+    "app/page.tsx": "Public landing page — entry point for unauthenticated users",
+    "app/sign-in/[[...sign-in]]/page.tsx": "Clerk catch-all sign-in page with branded appearance config matching dark theme",
+    "app/sign-up/[[...sign-up]]/page.tsx": "Clerk catch-all sign-up page with branded appearance config matching dark theme",
+    "components/header.tsx": "Sticky glass header with Clerk auth state — shows SignedIn/SignedOut components, UserButton, sign-in and sign-up navigation links",
+    "lib/supabase/client.ts": "Supabase browser client using createBrowserClient from @supabase/ssr — for use in Client Components only",
+    "lib/supabase/server.ts": "Supabase server client using createServerClient with async cookies() from next/headers — for Route Handlers and Server Components",
+    "middleware.ts": "Clerk auth middleware using createRouteMatcher — protects all routes except /, /sign-in, /sign-up",
+    "next.config.js": "Next.js config with remotePatterns for Clerk and Supabase image domains — CommonJS format, do not change to .ts",
+    "tailwind.config.ts": "Tailwind config with CSS variable tokens for all colors, custom shadow-glass/shadow-glow utilities, custom border radius scale, fade-in/slide-up keyframe animations, darkMode: class",
+    "tsconfig.json": "TypeScript config with strict: true, moduleResolution: bundler, @/* path alias resolving to project root",
+    "postcss.config.js": "PostCSS config with tailwindcss and autoprefixer plugins",
+    ".env.example": "Template for all required environment variables — NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY, CLERK_SECRET_KEY, NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, clerk sign-in/up URLs",
+    "neev-architecture.md": "Authoritative design system and coding standards reference — tech stack versions, CSS variables, glass morphism patterns, component patterns, TypeScript standards, Clerk and Supabase integration guides"
+  }
+}
