@@ -5,7 +5,14 @@
     "frameworkVersion": "15",
     "auth": "clerk",
     "database": "supabase",
-    "styling": "tailwind"
+    "styling": "tailwind",
+    "ui": ["lucide-react", "framer-motion", "class-variance-authority", "clsx", "tailwind-merge"],
+    "forms": ["react-hook-form", "zod"],
+    "data": ["@tanstack/react-table", "@tanstack/react-virtual", "recharts"],
+    "dnd": ["@dnd-kit/core", "@dnd-kit/sortable"],
+    "dates": ["date-fns", "react-day-picker"],
+    "syntax": ["shiki"],
+    "toasts": ["sonner"]
   },
   "fileManifest": {
     "app/globals.css": "Complete design system — CSS variables for dark/light mode (--background, --surface, --surface-raised, --surface-overlay, --border, --border-strong, --text-primary, --text-secondary, --text-tertiary, --accent, --accent-hover, --accent-glow, --success, --warning, --error, --radius-sm/md/lg/xl), glass-card/glass-card-hover/glass-card-active classes, btn-primary/btn-secondary/btn-ghost/btn-danger button classes, input-field class, badge classes (badge-default/accent/success/warning/error), skeleton loading classes with shimmer animation, modal-overlay/modal-card classes, animation classes (animate-fade-in/slide-in/scale-in), divider class, light mode overrides via .light class",

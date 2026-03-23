@@ -24,6 +24,7 @@
 14. [Authentication — Clerk](#14-authentication--clerk)
 15. [Database — Supabase](#15-database--supabase)
 16. [Coding Standards](#16-coding-standards)
+17. [UI Components & Classes](#17-ui-components--classes)
 
 ---
 
@@ -39,11 +40,24 @@
 | Database | `@supabase/ssr` + `@supabase/supabase-js` | `^0.5.2` / `^2.46.2` | SSR-safe clients |
 | Font | `next/font/google` → Inter | built-in | Self-hosted, no external request at runtime |
 | Config | `next.config.js` | — | `.js` not `.ts` — do not change extension |
+| Icons | `lucide-react` | `^0.577.0` | Tree-shakeable SVG icons |
+| Animation | `framer-motion` | `^12.0.0` | Motion primitives for complex animations |
+| Class utils | `clsx` + `tailwind-merge` | `^2.1.0` / `^2.2.0` | Conditional + conflict-free class merging |
+| CVA | `class-variance-authority` | `^0.7.0` | Typed variant-based component styling |
+| Forms | `react-hook-form` + `zod` | `^7.51.0` / `^3.22.0` | Uncontrolled forms + schema validation |
+| Tables | `@tanstack/react-table` | `^8.13.0` | Headless table with sorting/filtering |
+| Virtualisation | `@tanstack/react-virtual` | `^3.2.0` | Virtual scrolling for large lists |
+| Charts | `recharts` | `^2.15.0` | Composable chart components |
+| Drag & Drop | `@dnd-kit/core` + `@dnd-kit/sortable` | `^6.1.0` / `^8.0.0` | Accessible drag-and-drop |
+| Dates | `date-fns` + `react-day-picker` | `^3.6.0` / `^9.0.0` | Date utilities + calendar picker |
+| Syntax highlighting | `shiki` | `^1.0.0` | Code highlighting (server-side) |
+| Toasts | `sonner` | `^2.0.7` | Toast notifications via `showToast` helper |
 
 **Critical version notes:**
 - Tailwind is v3. Do not use v4 syntax (no `@import "tailwindcss"`, no `@theme` blocks).
 - `@apply` in CSS files cannot use arbitrary value classes like `bg-white/[0.08]` — use standard opacity steps (multiples of 5: `/5`, `/10`, `/20`, etc.).
 - `cookies()` from `next/headers` is async in Next.js 15 — always `await` it.
+- Use `cn()` (clsx + tailwind-merge) for combining class strings on component props — create `lib/utils.ts` with `export function cn(...inputs) { return twMerge(clsx(inputs)) }` when needed.
 
 ---
 
@@ -844,3 +858,256 @@ Both are `NEXT_PUBLIC_` because they are used in both client and server code. Th
 - In Server Components and Server Actions, handle database/API errors explicitly — do not let them bubble to the client unhandled.
 - The `setAll` catch block in `lib/supabase/server.ts` is intentional — Server Components cannot set cookies, and this is handled by middleware.
 - Supabase queries return `{ data, error }` — always check `error` before using `data`.
+
+---
+
+## 17. UI Components & Classes
+
+This section is the definitive rulebook for UI construction. All classes listed here are defined in `app/globals.css` and available globally — no imports needed.
+
+### Cards & Containers
+
+| Use | Class |
+|---|---|
+| Standard card / panel | `glass-card` |
+| Clickable / hoverable card | `glass-card-hover` |
+| Selected / active card | `glass-card-active` |
+
+**Rules:**
+- Always use `glass-card` for any card-shaped container. Never create custom card styles inline.
+- Use `glass-card-active` when a card represents a selected item (e.g. active nav item, selected plan).
+- Cards already include `border-radius: var(--radius-lg)`, `backdrop-filter: blur(12px)`, border, and transition.
+
+```tsx
+// ✅
+<div className="glass-card p-6">...</div>
+
+// ❌ Never
+<div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 12 }}>...</div>
+```
+
+### Buttons
+
+| Intent | Class |
+|---|---|
+| Primary action (submit, CTA) | `btn-primary` |
+| Secondary action | `btn-secondary` |
+| Tertiary / subtle / nav link | `btn-ghost` |
+| Destructive (delete, remove) | `btn-danger` |
+
+**Rules:**
+- Never create custom button styles — always use one of the four classes above.
+- Works on both `<button>` and `<a>` / Next.js `<Link>` elements.
+- Compose size via `style={{ padding: ... }}` if the default size doesn't fit context.
+
+```tsx
+// ✅
+<button className="btn-primary">Save changes</button>
+<Link href="/sign-up" className="btn-primary">Get started</Link>
+<button className="btn-danger">Delete account</button>
+
+// ❌ Never
+<button style={{ background: '#6366f1', borderRadius: 8 }}>Save</button>
+```
+
+### Inputs
+
+| Use | Class |
+|---|---|
+| All text inputs, textareas, selects | `input-field` |
+
+**Rules:**
+- Never style inputs with inline styles or custom classes.
+- `input-field` includes focus ring, placeholder color, border, and transition.
+
+```tsx
+// ✅
+<input className="input-field" type="text" placeholder="Enter your name" />
+<textarea className="input-field" rows={4} />
+
+// ❌ Never
+<input style={{ border: '1px solid rgba(255,255,255,0.1)' }} />
+```
+
+### Badges & Status Indicators
+
+All badges require both the base `badge` class and a variant class:
+
+| Variant | Classes | Use |
+|---|---|---|
+| Default / neutral | `badge badge-default` | Tags, counts, labels |
+| Feature / accent | `badge badge-accent` | Pro features, highlights |
+| Success | `badge badge-success` | Active, completed, healthy |
+| Warning | `badge badge-warning` | Pending, needs attention |
+| Error | `badge badge-error` | Failed, blocked, error state |
+
+```tsx
+// ✅
+<span className="badge badge-success">Active</span>
+<span className="badge badge-error">Failed</span>
+<span className="badge badge-accent">Pro</span>
+```
+
+### Loading / Skeleton States
+
+| Skeleton | Classes | Dimensions |
+|---|---|---|
+| Single line of text | `skeleton skeleton-text` | 16px height |
+| Heading / title | `skeleton skeleton-title` | 24px height |
+| Card placeholder | `skeleton skeleton-card` | 120px height |
+| Avatar / icon | `skeleton skeleton-avatar` | 40×40px, circle |
+
+**Rules:**
+- **Always** show skeletons while data is fetching. Never render empty containers or show nothing.
+- **Never** show a loading spinner as the only feedback for inline content — use skeletons for layout-preserving loading.
+
+```tsx
+// ✅ While loading
+{isLoading ? (
+  <div className="space-y-3">
+    <div className="skeleton skeleton-title w-1/3" />
+    <div className="skeleton skeleton-text w-2/3" />
+    <div className="skeleton skeleton-card" />
+  </div>
+) : (
+  <ActualContent />
+)}
+
+// ❌ Never
+{isLoading ? null : <ActualContent />}
+{isLoading ? <div /> : <ActualContent />}
+```
+
+### Modals & Overlays
+
+| Element | Class |
+|---|---|
+| Full-screen backdrop | `modal-overlay` |
+| Modal content box | `modal-card` |
+
+`modal-overlay` is `position: fixed; inset: 0` with `backdrop-filter: blur(4px)` — wrap it around `modal-card`.
+
+```tsx
+// ✅
+{isOpen && (
+  <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-card" onClick={e => e.stopPropagation()}>
+      <h2>Confirm action</h2>
+      <p>...</p>
+      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+        <button className="btn-ghost" onClick={onClose}>Cancel</button>
+        <button className="btn-danger" onClick={onConfirm}>Delete</button>
+      </div>
+    </div>
+  </div>
+)}
+```
+
+### Animations
+
+| Trigger | Class | Effect |
+|---|---|---|
+| Page / component mount | `animate-fade-in` | Fades up from 8px below, 0.3s |
+| Sidebar / drawer / list item | `animate-slide-in` | Slides in from left, 0.3s |
+| Modal / popup / dropdown | `animate-scale-in` | Scales up from 95%, 0.2s |
+
+```tsx
+// ✅ Page section entry
+<section className="animate-fade-in">...</section>
+
+// ✅ Modal
+<div className="modal-card animate-scale-in">...</div>
+
+// ✅ Staggered list
+{items.map((item, i) => (
+  <div key={item.id} className="glass-card animate-fade-in" style={{ animationDelay: `${i * 50}ms` }}>
+    ...
+  </div>
+))}
+```
+
+### Toast Notifications
+
+**Import:** `import { showToast } from '@/lib/toast'`
+
+| Method | Use |
+|---|---|
+| `showToast.success('message')` | Successful action (save, create, update) |
+| `showToast.error('message')` | Failed action, API error |
+| `showToast.loading('message')` | In-progress async operation |
+| `showToast.dismiss()` | Dismiss all active toasts |
+
+**Rules:**
+- **Never** use `alert()` for user feedback.
+- **Never** use `console.log()` for user-visible messages.
+- Always call `showToast.dismiss()` before `showToast.loading()` to avoid stacking.
+
+```tsx
+// ✅
+async function handleSave() {
+  showToast.loading('Saving...')
+  try {
+    await save()
+    showToast.dismiss()
+    showToast.success('Saved!')
+  } catch {
+    showToast.dismiss()
+    showToast.error('Failed to save. Please try again.')
+  }
+}
+
+// ❌ Never
+alert('Saved!')
+console.log('error:', err)
+```
+
+### Dividers
+
+```tsx
+// ✅
+<div className="divider" />
+
+// ❌ Never
+<hr style={{ borderColor: 'rgba(255,255,255,0.08)' }} />
+```
+
+### Dark / Light Mode
+
+- **Dark is default** — `:root` CSS variables define the dark palette.
+- **Light mode** — toggled by adding `.light` class to `<html>`. Handled by the Header component, persisted in `localStorage`.
+- **Never hardcode colors** — always use CSS custom properties.
+- When building new components, use `var(--text-primary)`, `var(--surface)`, `var(--border)` etc., not hex values.
+
+```tsx
+// ✅
+<p style={{ color: 'var(--text-secondary)' }}>Subtitle</p>
+<div style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>...</div>
+
+// ❌ Never
+<p style={{ color: '#8888aa' }}>Subtitle</p>
+<div style={{ background: '#111118' }}>...</div>
+```
+
+**Available CSS variables:**
+
+| Variable | Dark value | Light value |
+|---|---|---|
+| `--background` | `#0a0a0f` | `#f8f8fc` |
+| `--surface` | `#111118` | `#ffffff` |
+| `--surface-raised` | `#16161f` | `#ffffff` |
+| `--surface-overlay` | `#1c1c28` | `#ffffff` |
+| `--border` | `rgba(255,255,255,0.08)` | `rgba(0,0,0,0.08)` |
+| `--border-strong` | `rgba(255,255,255,0.15)` | `rgba(0,0,0,0.15)` |
+| `--text-primary` | `#f0f0ff` | `#0f0f1a` |
+| `--text-secondary` | `#8888aa` | `#555570` |
+| `--text-tertiary` | `#555570` | `#9999bb` |
+| `--accent` | `#6366f1` | `#6366f1` |
+| `--accent-hover` | `#818cf8` | `#818cf8` |
+| `--accent-glow` | `rgba(99,102,241,0.2)` | `rgba(99,102,241,0.2)` |
+| `--success` | `#22c55e` | `#22c55e` |
+| `--warning` | `#f59e0b` | `#f59e0b` |
+| `--error` | `#ef4444` | `#ef4444` |
+| `--radius-sm` | `8px` | — |
+| `--radius-md` | `12px` | — |
+| `--radius-lg` | `16px` | — |
+| `--radius-xl` | `24px` | — |
