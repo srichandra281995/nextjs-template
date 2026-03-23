@@ -8,20 +8,21 @@
     "styling": "tailwind"
   },
   "fileManifest": {
-    "app/globals.css": "Global CSS variables, design tokens, glass morphism utility classes (.glass-card, .glass-card-hover, .btn-primary, .btn-secondary), animation keyframes, dark/light mode CSS variables",
-    "app/layout.tsx": "Root layout wrapping app with ClerkProvider, Inter font via next/font, dark mode class on html element, metadata title template",
-    "app/page.tsx": "Public landing page — entry point for unauthenticated users",
-    "app/sign-in/[[...sign-in]]/page.tsx": "Clerk catch-all sign-in page with branded appearance config matching dark theme",
-    "app/sign-up/[[...sign-up]]/page.tsx": "Clerk catch-all sign-up page with branded appearance config matching dark theme",
-    "components/header.tsx": "Sticky glass header with Clerk auth state — shows SignedIn/SignedOut components, UserButton, sign-in and sign-up navigation links",
+    "app/globals.css": "Complete design system — CSS variables for dark/light mode (--background, --surface, --surface-raised, --surface-overlay, --border, --border-strong, --text-primary, --text-secondary, --text-tertiary, --accent, --accent-hover, --accent-glow, --success, --warning, --error, --radius-sm/md/lg/xl), glass-card/glass-card-hover/glass-card-active classes, btn-primary/btn-secondary/btn-ghost/btn-danger button classes, input-field class, badge classes (badge-default/accent/success/warning/error), skeleton loading classes with shimmer animation, modal-overlay/modal-card classes, animation classes (animate-fade-in/slide-in/scale-in), divider class, light mode overrides via .light class",
+    "app/layout.tsx": "Root layout — ClerkProvider with afterSignOutUrl, Inter font via next/font, dark class on html element, Sonner Toaster (richColors, bottom-right), metadata from NEXT_PUBLIC_APP_NAME env var",
+    "app/page.tsx": "Home page — redirects to /dashboard if signed in, shows centered sign-in button if signed out. No branding or placeholder content.",
+    "app/sign-in/[[...sign-in]]/page.tsx": "Clerk catch-all sign-in page with dark theme appearance config",
+    "app/sign-up/[[...sign-up]]/page.tsx": "Clerk catch-all sign-up page with dark theme appearance config",
+    "components/header.tsx": "Sticky glass header (Client Component) — left: app name from NEXT_PUBLIC_APP_NAME, right: ThemeToggle button (adds/removes .light class on html, persists to localStorage) + Clerk UserButton (signed in) or sign-in link (signed out)",
     "lib/supabase/client.ts": "Supabase browser client using createBrowserClient from @supabase/ssr — for use in Client Components only",
     "lib/supabase/server.ts": "Supabase server client using createServerClient with async cookies() from next/headers — for Route Handlers and Server Components",
+    "lib/toast.ts": "showToast helper wrapping sonner — showToast.success/error/loading/dismiss",
     "middleware.ts": "Clerk auth middleware using createRouteMatcher — protects all routes except /, /sign-in, /sign-up",
     "next.config.js": "Next.js config with remotePatterns for Clerk and Supabase image domains — CommonJS format, do not change to .ts",
     "tailwind.config.ts": "Tailwind config with CSS variable tokens for all colors, custom shadow-glass/shadow-glow utilities, custom border radius scale, fade-in/slide-up keyframe animations, darkMode: class",
     "tsconfig.json": "TypeScript config with strict: true, moduleResolution: bundler, @/* path alias resolving to project root",
     "postcss.config.js": "PostCSS config with tailwindcss and autoprefixer plugins",
-    ".env.example": "Template for all required environment variables — NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY, CLERK_SECRET_KEY, NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, clerk sign-in/up URLs",
+    ".env.example": "Template for all required environment variables — NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY, CLERK_SECRET_KEY, NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_APP_NAME, clerk routing URLs",
     "neev-architecture.md": "Authoritative design system and coding standards reference — tech stack versions, CSS variables, glass morphism patterns, component patterns, TypeScript standards, Clerk and Supabase integration guides"
   }
 }

@@ -1,55 +1,110 @@
+'use client'
+
 import Link from 'next/link'
 import { SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
+import { useEffect, useState } from 'react'
+
+function ThemeToggle() {
+  const [isLight, setIsLight] = useState(false)
+
+  useEffect(() => {
+    const stored = localStorage.getItem('theme')
+    if (stored === 'light') {
+      document.documentElement.classList.add('light')
+      setIsLight(true)
+    }
+  }, [])
+
+  const toggle = () => {
+    const html = document.documentElement
+    if (isLight) {
+      html.classList.remove('light')
+      localStorage.setItem('theme', 'dark')
+      setIsLight(false)
+    } else {
+      html.classList.add('light')
+      localStorage.setItem('theme', 'light')
+      setIsLight(true)
+    }
+  }
+
+  return (
+    <button
+      onClick={toggle}
+      className="btn-ghost"
+      style={{ padding: '8px', fontSize: '16px', lineHeight: 1 }}
+      aria-label="Toggle theme"
+    >
+      {isLight ? '🌙' : '☀️'}
+    </button>
+  )
+}
+
+const appName = process.env.NEXT_PUBLIC_APP_NAME ?? 'App'
 
 export function Header() {
   return (
-    <header className="sticky top-0 z-50 border-b border-white/8 bg-background/80 backdrop-blur-md">
-      <div className="container-page flex h-16 items-center justify-between">
+    <header
+      style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 50,
+        height: '60px',
+        display: 'flex',
+        alignItems: 'center',
+        borderBottom: '1px solid var(--border)',
+        background: 'rgba(10, 10, 15, 0.85)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+      }}
+    >
+      <div
+        style={{
+          width: '100%',
+          maxWidth: '1280px',
+          margin: '0 auto',
+          padding: '0 24px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '16px',
+        }}
+      >
         {/* Logo */}
         <Link
           href="/"
-          className="flex items-center gap-2.5 font-bold tracking-tight transition-opacity duration-200 hover:opacity-80"
+          style={{
+            fontWeight: 600,
+            fontSize: '15px',
+            color: 'var(--text-primary)',
+            textDecoration: 'none',
+            letterSpacing: '-0.01em',
+          }}
         >
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground text-xs font-black">
-            N
-          </span>
-          <span className="text-lg">Neev</span>
+          {appName}
         </Link>
 
-        {/* Nav */}
-        <nav className="flex items-center gap-1">
+        {/* Right side */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <ThemeToggle />
+
           <SignedOut>
-            <Link href="/" className="btn-ghost hidden sm:inline-flex">
-              Home
-            </Link>
-            <Link
-              href="/sign-in"
-              className="btn-ghost hidden sm:inline-flex"
-            >
+            <Link href="/sign-in" className="btn-ghost">
               Sign in
-            </Link>
-            <Link href="/sign-up" className="btn-primary ml-2">
-              Get started
             </Link>
           </SignedOut>
 
           <SignedIn>
-            <Link href="/" className="btn-ghost hidden sm:inline-flex">
-              Home
-            </Link>
-            <div className="ml-3 flex items-center">
-              <UserButton
-                afterSignOutUrl="/"
-                appearance={{
-                  variables: {
-                    colorPrimary: '#6366f1',
-                    borderRadius: '0.5rem',
-                  },
-                }}
-              />
-            </div>
+            <UserButton
+              appearance={{
+                variables: {
+                  colorPrimary: '#6366f1',
+                  borderRadius: '8px',
+                },
+              }}
+            />
           </SignedIn>
-        </nav>
+        </div>
       </div>
     </header>
   )

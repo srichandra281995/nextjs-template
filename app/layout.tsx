@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { ClerkProvider } from '@clerk/nextjs'
+import { Toaster } from 'sonner'
 import './globals.css'
 import { Header } from '@/components/header'
 
@@ -12,12 +13,10 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Neev — Next.js 15 Template',
-    template: '%s | Neev',
+    default: process.env.NEXT_PUBLIC_APP_NAME ?? 'App',
+    template: `%s | ${process.env.NEXT_PUBLIC_APP_NAME ?? 'App'}`,
   },
-  description:
-    'Production-ready Next.js 15 starter with Clerk authentication, Supabase, TypeScript, and a modern design system.',
-  keywords: ['Next.js', 'TypeScript', 'Tailwind CSS', 'Clerk', 'Supabase'],
+  description: 'Built with Next.js 15, Clerk, and Supabase.',
 }
 
 export default function RootLayout({
@@ -27,13 +26,13 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider afterSignOutUrl="/">
-      {/* dark class = dark mode by default; remove to default to light */}
       <html lang="en" className={`dark ${inter.variable}`} suppressHydrationWarning>
-        <body className="min-h-screen bg-background font-sans text-foreground antialiased">
-          <div className="relative flex min-h-screen flex-col">
+        <body className="antialiased">
+          <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
             <Header />
-            <main className="flex-1">{children}</main>
+            <main style={{ flex: 1 }}>{children}</main>
           </div>
+          <Toaster richColors position="bottom-right" />
         </body>
       </html>
     </ClerkProvider>
