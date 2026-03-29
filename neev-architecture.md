@@ -48,10 +48,13 @@
 | Tables | `@tanstack/react-table` | `^8.13.0` | Headless table with sorting/filtering |
 | Virtualisation | `@tanstack/react-virtual` | `^3.2.0` | Virtual scrolling for large lists |
 | Charts | `recharts` | `^2.15.0` | Composable chart components |
-| Drag & Drop | `@dnd-kit/core` + `@dnd-kit/sortable` | `^6.1.0` / `^8.0.0` | Accessible drag-and-drop |
+| Drag & Drop | `@dnd-kit/core` + `@dnd-kit/sortable` + `@dnd-kit/utilities` | `^6.1.0` / `^8.0.0` / `^3.2.2` | Accessible drag-and-drop |
 | Dates | `date-fns` + `react-day-picker` | `^3.6.0` / `^9.0.0` | Date utilities + calendar picker |
 | Syntax highlighting | `shiki` | `^1.0.0` | Code highlighting (server-side) |
 | Toasts | `sonner` | `^2.0.7` | Toast notifications via `showToast` helper |
+| Payments | `stripe` | `^17.0.0` | Stripe SDK for payment processing |
+| Email | `resend` + `@react-email/components` + `@react-email/render` | `^4.0.0` / `^0.0.22` / `^1.0.0` | Transactional email via Resend with React templates |
+| CSV | `papaparse` | `^5.4.1` | CSV parsing and generation (`@types/papaparse` in devDeps) |
 
 **Critical version notes:**
 - Tailwind is v3. Do not use v4 syntax (no `@import "tailwindcss"`, no `@theme` blocks).

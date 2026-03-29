@@ -9,10 +9,13 @@
     "ui": ["lucide-react", "framer-motion", "class-variance-authority", "clsx", "tailwind-merge"],
     "forms": ["react-hook-form", "zod"],
     "data": ["@tanstack/react-table", "@tanstack/react-virtual", "recharts"],
-    "dnd": ["@dnd-kit/core", "@dnd-kit/sortable"],
+    "dnd": ["@dnd-kit/core", "@dnd-kit/sortable", "@dnd-kit/utilities"],
     "dates": ["date-fns", "react-day-picker"],
     "syntax": ["shiki"],
-    "toasts": ["sonner"]
+    "toasts": ["sonner"],
+    "payments": ["stripe"],
+    "email": ["resend", "@react-email/components", "@react-email/render"],
+    "csv": ["papaparse"]
   },
   "fileManifest": {
     "app/globals.css": "Complete design system — CSS variables for dark/light mode (--background, --surface, --surface-raised, --surface-overlay, --border, --border-strong, --text-primary, --text-secondary, --text-tertiary, --accent, --accent-hover, --accent-glow, --success, --warning, --error, --radius-sm/md/lg/xl), glass-card/glass-card-hover/glass-card-active classes, btn-primary/btn-secondary/btn-ghost/btn-danger button classes, input-field class, badge classes (badge-default/accent/success/warning/error), skeleton loading classes with shimmer animation, modal-overlay/modal-card classes, animation classes (animate-fade-in/slide-in/scale-in), divider class, light mode overrides via .light class",
@@ -24,7 +27,7 @@
     "lib/supabase/client.ts": "Supabase browser client using createBrowserClient from @supabase/ssr — for use in Client Components only",
     "lib/supabase/server.ts": "Supabase server client using createServerClient with async cookies() from next/headers — for Route Handlers and Server Components",
     "lib/toast.ts": "showToast helper wrapping sonner — showToast.success/error/loading/dismiss",
-    "middleware.ts": "Clerk auth middleware using createRouteMatcher — protects all routes except /, /sign-in, /sign-up",
+    "middleware.ts": "Clerk auth middleware using createRouteMatcher — protects all routes except /, /sign-in, /sign-up, /api/webhooks/*",
     "next.config.js": "Next.js config with remotePatterns for Clerk and Supabase image domains — CommonJS format, do not change to .ts",
     "tailwind.config.ts": "Tailwind config with CSS variable tokens for all colors, custom shadow-glass/shadow-glow utilities, custom border radius scale, fade-in/slide-up keyframe animations, darkMode: class",
     "tsconfig.json": "TypeScript config with strict: true, moduleResolution: bundler, @/* path alias resolving to project root",
