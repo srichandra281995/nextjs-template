@@ -1,37 +1,104 @@
-import type { Metadata } from 'next'
-import { SignIn } from '@clerk/nextjs'
+'use client'
 
-export const metadata: Metadata = {
-  title: 'Sign In',
+import { SignIn } from '@clerk/nextjs'
+import { useEffect, useState } from 'react'
+
+const clerkElements = {
+  card: { boxShadow: 'none', border: 'none', background: 'transparent', padding: '0' },
+  rootBox: { width: '100%' },
+}
+
+const darkVars = {
+  colorPrimary: '#6366f1',
+  colorBackground: '#0a0a0f',
+  colorInputBackground: '#16161f',
+  colorInputText: '#f0f0ff',
+  colorText: '#f0f0ff',
+  colorTextSecondary: '#8888aa',
+  colorNeutral: '#2a2a3a',
+  borderRadius: '12px',
+  fontFamily: 'var(--font-inter), Inter, system-ui, sans-serif',
+}
+
+const lightVars = {
+  colorPrimary: '#6366f1',
+  colorBackground: '#f8f8fc',
+  colorInputBackground: '#ffffff',
+  colorInputText: '#0f0f1a',
+  colorText: '#0f0f1a',
+  colorTextSecondary: '#555570',
+  colorNeutral: '#e0e0f0',
+  borderRadius: '12px',
+  fontFamily: 'var(--font-inter), Inter, system-ui, sans-serif',
 }
 
 export default function SignInPage() {
+  const [isLight, setIsLight] = useState(false)
+
+  useEffect(() => {
+    setIsLight(document.documentElement.classList.contains('light'))
+    const observer = new MutationObserver(() =>
+      setIsLight(document.documentElement.classList.contains('light'))
+    )
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    return () => observer.disconnect()
+  }, [])
+
   return (
-    <div className="relative flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-16">
+    <div
+      style={{
+        minHeight: 'calc(100vh - 60px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '40px 16px',
+        position: 'relative',
+      }}
+    >
       {/* Ambient glow */}
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute left-1/2 top-1/3 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-indigo-600/8 blur-[120px]" />
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          zIndex: 0,
+          pointerEvents: 'none',
+          overflow: 'hidden',
+        }}
+      >
+        <div
+          style={{
+            position: 'absolute',
+            left: '50%',
+            top: '40%',
+            transform: 'translate(-50%, -50%)',
+            width: '600px',
+            height: '600px',
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)',
+            filter: 'blur(40px)',
+          }}
+        />
       </div>
 
-      <div className="w-full max-w-md space-y-6">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold tracking-tight">Welcome back</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Sign in to your account to continue</p>
+      {/* Glass card */}
+      <div
+        className="glass-card"
+        style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: '480px', padding: '40px' }}
+      >
+        <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+          <h1 style={{ fontSize: '22px', fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>
+            Welcome back
+          </h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginTop: '6px' }}>
+            Sign in to your account to continue
+          </p>
         </div>
 
         <SignIn
           appearance={{
-            variables: {
-              colorPrimary: '#6366f1',
-              colorBackground: '#0d1117',
-              colorInputBackground: '#161b22',
-              colorInputText: '#e2e8f0',
-              colorText: '#e2e8f0',
-              colorTextSecondary: '#94a3b8',
-              colorNeutral: '#1e293b',
-              borderRadius: '0.75rem',
-              fontFamily: 'var(--font-inter), Inter, system-ui, sans-serif',
-            },
+            variables: isLight ? lightVars : darkVars,
+            elements: clerkElements,
+            layout: { unsafe_disableDevelopmentModeWarnings: true },
           }}
         />
       </div>

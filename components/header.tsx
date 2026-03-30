@@ -4,45 +4,56 @@ import Link from 'next/link'
 import { SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
 import { useEffect, useState } from 'react'
 
-function ThemeToggle() {
+const appName = process.env.NEXT_PUBLIC_APP_NAME ?? 'App'
+
+export function Header() {
   const [isLight, setIsLight] = useState(false)
 
   useEffect(() => {
-    const stored = localStorage.getItem('theme')
-    if (stored === 'light') {
-      document.documentElement.classList.add('light')
-      setIsLight(true)
-    }
+    setIsLight(document.documentElement.classList.contains('light'))
+    const observer = new MutationObserver(() =>
+      setIsLight(document.documentElement.classList.contains('light'))
+    )
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    return () => observer.disconnect()
   }, [])
 
-  const toggle = () => {
+  const toggleTheme = () => {
     const html = document.documentElement
     if (isLight) {
       html.classList.remove('light')
       localStorage.setItem('theme', 'dark')
-      setIsLight(false)
     } else {
       html.classList.add('light')
       localStorage.setItem('theme', 'light')
-      setIsLight(true)
     }
+    // state updates via the MutationObserver above
   }
 
-  return (
-    <button
-      onClick={toggle}
-      className="btn-ghost"
-      style={{ padding: '8px', fontSize: '16px', lineHeight: 1 }}
-      aria-label="Toggle theme"
-    >
-      {isLight ? '🌙' : '☀️'}
-    </button>
-  )
-}
+  const userButtonAppearance = {
+    variables: {
+      colorPrimary: '#6366f1',
+      colorBackground: isLight ? '#ffffff' : '#16161f',
+      colorText: isLight ? '#0f0f1a' : '#f0f0ff',
+      colorTextSecondary: isLight ? '#555570' : '#8888aa',
+      colorInputBackground: isLight ? '#f8f8fc' : '#0a0a0f',
+      colorInputText: isLight ? '#0f0f1a' : '#f0f0ff',
+      colorNeutral: isLight ? '#e0e0f0' : '#2a2a3a',
+      borderRadius: '12px',
+      fontFamily: 'var(--font-inter), Inter, system-ui, sans-serif',
+    },
+    elements: {
+      userButtonPopoverCard: {
+        border: '1px solid rgba(255,255,255,0.08)',
+        boxShadow: '0 24px 64px rgba(0,0,0,0.4)',
+        backdropFilter: 'blur(12px)',
+      },
+      userButtonPopoverActionButton: {
+        borderRadius: '8px',
+      },
+    },
+  }
 
-const appName = process.env.NEXT_PUBLIC_APP_NAME ?? 'App'
-
-export function Header() {
   return (
     <header
       style={{
@@ -53,7 +64,7 @@ export function Header() {
         display: 'flex',
         alignItems: 'center',
         borderBottom: '1px solid var(--border)',
-        background: 'rgba(10, 10, 15, 0.85)',
+        background: 'color-mix(in srgb, var(--background) 85%, transparent)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
       }}
@@ -86,7 +97,15 @@ export function Header() {
 
         {/* Right side */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <ThemeToggle />
+          {/* Theme toggle */}
+          <button
+            onClick={toggleTheme}
+            className="btn-ghost"
+            style={{ padding: '8px', fontSize: '16px', lineHeight: 1 }}
+            aria-label="Toggle theme"
+          >
+            {isLight ? '🌙' : '☀️'}
+          </button>
 
           <SignedOut>
             <Link href="/sign-in" className="btn-ghost">
@@ -95,14 +114,7 @@ export function Header() {
           </SignedOut>
 
           <SignedIn>
-            <UserButton
-              appearance={{
-                variables: {
-                  colorPrimary: '#6366f1',
-                  borderRadius: '8px',
-                },
-              }}
-            />
+            <UserButton appearance={userButtonAppearance} />
           </SignedIn>
         </div>
       </div>

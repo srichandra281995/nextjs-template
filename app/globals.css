@@ -88,6 +88,10 @@
     background: rgba(255, 255, 255, 0.25);
   }
 
+  .light ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.25);
+  }
+
   ::selection {
     background: rgba(99, 102, 241, 0.3);
     color: var(--text-primary);
@@ -213,6 +217,16 @@
   transform: scale(0.97);
 }
 
+.light .btn-secondary {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.light .btn-secondary:hover {
+  background: rgba(0, 0, 0, 0.07);
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
 .btn-ghost {
   display: inline-flex;
   align-items: center;
@@ -239,6 +253,10 @@
 
 .btn-ghost:active {
   transform: scale(0.97);
+}
+
+.light .btn-ghost:hover {
+  background: rgba(0, 0, 0, 0.05);
 }
 
 .btn-danger {
@@ -295,6 +313,11 @@
   color: var(--text-tertiary);
 }
 
+.light .input-field {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
 /* ─── Badges ─────────────────────────────────────────────────────────────────── */
 
 .badge {
@@ -310,6 +333,10 @@
 .badge-default {
   background: rgba(255, 255, 255, 0.08);
   color: var(--text-secondary);
+}
+
+.light .badge-default {
+  background: rgba(0, 0, 0, 0.06);
 }
 
 .badge-accent {
@@ -375,6 +402,16 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
+}
+
+.light .skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.04) 25%,
+    rgba(0, 0, 0, 0.08) 50%,
+    rgba(0, 0, 0, 0.04) 75%
+  );
+  background-size: 200% 100%;
 }
 
 /* ─── Modal / Overlay ────────────────────────────────────────────────────────── */
