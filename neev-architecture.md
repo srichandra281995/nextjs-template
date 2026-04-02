@@ -45,7 +45,19 @@
 | Class utils | `clsx` + `tailwind-merge` | `^2.1.0` / `^2.2.0` | Conditional + conflict-free class merging |
 | CVA | `class-variance-authority` | `^0.7.0` | Typed variant-based component styling |
 | Forms | `react-hook-form` + `zod` | `^7.51.0` / `^3.22.0` | Uncontrolled forms + schema validation |
+| Server state | `@tanstack/react-query` | `^5.56.2` | Async data fetching, caching, and sync |
 | Tables | `@tanstack/react-table` | `^8.13.0` | Headless table with sorting/filtering |
+| Radix UI | `@radix-ui/react-slot` | `^1.1.0` | `asChild` pattern — powers CVA button components |
+| Radix UI | `@radix-ui/react-dialog` | `^1.1.2` | Accessible modal/dialog primitive |
+| Radix UI | `@radix-ui/react-dropdown-menu` | `^2.1.2` | Accessible dropdown menu |
+| Radix UI | `@radix-ui/react-tooltip` | `^1.1.3` | Accessible tooltip |
+| Radix UI | `@radix-ui/react-popover` | `^1.1.2` | Accessible popover |
+| Radix UI | `@radix-ui/react-select` | `^2.1.2` | Accessible select/combobox |
+| Radix UI | `@radix-ui/react-tabs` | `^1.1.1` | Accessible tab panels |
+| Radix UI | `@radix-ui/react-checkbox` | `^1.1.2` | Accessible checkbox |
+| Radix UI | `@radix-ui/react-label` | `^2.1.0` | Accessible form label |
+| Radix UI | `@radix-ui/react-separator` | `^1.1.0` | Visual/semantic separator |
+| Radix UI | `@radix-ui/react-switch` | `^1.1.1` | Accessible toggle switch |
 | Virtualisation | `@tanstack/react-virtual` | `^3.2.0` | Virtual scrolling for large lists |
 | Charts | `recharts` | `^2.15.0` | Composable chart components |
 | Drag & Drop | `@dnd-kit/core` + `@dnd-kit/sortable` + `@dnd-kit/utilities` | `^6.1.0` / `^8.0.0` / `^3.2.2` | Accessible drag-and-drop |
