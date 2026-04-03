@@ -45,7 +45,7 @@
 | Class utils | `clsx` + `tailwind-merge` | `^2.1.0` / `^2.2.0` | Conditional + conflict-free class merging |
 | CVA | `class-variance-authority` | `^0.7.0` | Typed variant-based component styling |
 | Forms | `react-hook-form` + `zod` | `^7.51.0` / `^3.22.0` | Uncontrolled forms + schema validation |
-| Server state | `@tanstack/react-query` | `^5.56.2` | Async data fetching, caching, and sync |
+| Server state | `@tanstack/react-query` | `^5.90.0` | Async data fetching, caching, and sync |
 | Tables | `@tanstack/react-table` | `^8.13.0` | Headless table with sorting/filtering |
 | Radix UI | `@radix-ui/react-slot` | `^1.1.0` | `asChild` pattern — powers CVA button components |
 | Radix UI | `@radix-ui/react-dialog` | `^1.1.2` | Accessible modal/dialog primitive |
@@ -59,9 +59,9 @@
 | Radix UI | `@radix-ui/react-separator` | `^1.1.0` | Visual/semantic separator |
 | Radix UI | `@radix-ui/react-switch` | `^1.1.1` | Accessible toggle switch |
 | Virtualisation | `@tanstack/react-virtual` | `^3.2.0` | Virtual scrolling for large lists |
-| Charts | `recharts` | `^2.15.0` | Composable chart components |
+| Charts | `recharts` | `^3.8.1` | Composable chart components |
 | Drag & Drop | `@dnd-kit/core` + `@dnd-kit/sortable` + `@dnd-kit/utilities` | `^6.1.0` / `^8.0.0` / `^3.2.2` | Accessible drag-and-drop |
-| Dates | `date-fns` + `react-day-picker` | `^3.6.0` / `^9.0.0` | Date utilities + calendar picker |
+| Dates | `date-fns` + `react-day-picker` | `^3.6.0` / `^9.4.3` | Date utilities + calendar picker |
 | Syntax highlighting | `shiki` | `^1.0.0` | Code highlighting (server-side) |
 | Toasts | `sonner` | `^2.0.7` | Toast notifications via `showToast` helper |
 | Payments | `stripe` | `^17.0.0` | Stripe SDK for payment processing |
@@ -1000,21 +1000,29 @@ All badges require both the base `badge` class and a variant class:
 | Full-screen backdrop | `modal-overlay` |
 | Modal content box | `modal-card` |
 
-`modal-overlay` is `position: fixed; inset: 0` with `backdrop-filter: blur(4px)` — wrap it around `modal-card`.
+`modal-overlay` is `position: fixed; inset: 0` with `backdrop-filter: blur(4px)`. **Always render modals via `createPortal` so the overlay covers the full viewport and is never clipped by a parent container.**
 
 ```tsx
-// ✅
-{isOpen && (
+// ✅ Always use createPortal
+import { createPortal } from 'react-dom'
+
+{isOpen && createPortal(
   <div className="modal-overlay" onClick={onClose}>
-    <div className="modal-card" onClick={e => e.stopPropagation()}>
+    <div className="modal-card animate-scale-in" onClick={e => e.stopPropagation()}>
       <h2>Confirm action</h2>
       <p>...</p>
-      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+      <div className="flex items-center justify-end gap-2 mt-4">
         <button className="btn-ghost" onClick={onClose}>Cancel</button>
         <button className="btn-danger" onClick={onConfirm}>Delete</button>
       </div>
     </div>
-  </div>
+  </div>,
+  document.body
+)}
+
+// ❌ Never render modals without createPortal — overlay gets clipped by parent stacking context
+{isOpen && (
+  <div className="modal-overlay">...</div>
 )}
 ```
 
