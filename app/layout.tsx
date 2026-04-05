@@ -4,6 +4,7 @@ import { ClerkProvider } from '@clerk/nextjs'
 import { Toaster } from 'sonner'
 import './globals.css'
 import { Header } from '@/components/header'
+import { QueryProvider } from '@/components/providers/QueryProvider'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -28,11 +29,13 @@ export default function RootLayout({
     <ClerkProvider afterSignOutUrl="/">
       <html lang="en" className={`dark ${inter.variable}`} suppressHydrationWarning>
         <body className="antialiased">
-          <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-            <Header />
-            <main style={{ flex: 1 }}>{children}</main>
-          </div>
-          <Toaster richColors position="bottom-right" />
+          <QueryProvider>
+            <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+              <Header />
+              <main style={{ flex: 1 }}>{children}</main>
+            </div>
+            <Toaster richColors position="bottom-right" />
+          </QueryProvider>
         </body>
       </html>
     </ClerkProvider>
