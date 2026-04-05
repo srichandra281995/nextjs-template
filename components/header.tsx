@@ -33,25 +33,37 @@ export function Header() {
   const userButtonAppearance = {
     variables: {
       colorPrimary: '#6366f1',
-      colorBackground: isLight ? '#ffffff' : '#16161f',
+      colorBackground: isLight ? '#ffffff' : '#1a1a26',
       colorText: isLight ? '#0f0f1a' : '#f0f0ff',
-      colorTextSecondary: isLight ? '#555570' : '#8888aa',
+      colorTextSecondary: isLight ? '#555570' : '#aaaacc',
       colorInputBackground: isLight ? '#f8f8fc' : '#0a0a0f',
       colorInputText: isLight ? '#0f0f1a' : '#f0f0ff',
-      colorNeutral: isLight ? '#e0e0f0' : '#2a2a3a',
+      colorNeutral: isLight ? '#a0a0b8' : '#4a4a6a',
       borderRadius: '12px',
       fontFamily: 'var(--font-inter), Inter, system-ui, sans-serif',
     },
     elements: {
       userButtonPopoverCard: {
-        border: '1px solid rgba(255,255,255,0.08)',
+        border: isLight ? '1px solid rgba(0,0,0,0.1)' : '1px solid rgba(255,255,255,0.1)',
         boxShadow: '0 24px 64px rgba(0,0,0,0.4)',
         backdropFilter: 'blur(12px)',
+        padding: '8px',
       },
       userButtonPopoverActionButton: {
         borderRadius: '8px',
+        color: isLight ? '#0f0f1a' : '#f0f0ff',
+        padding: '10px 12px',
       },
+      userButtonPopoverActionButtonIcon: {
+        color: isLight ? '#555570' : '#aaaacc',
+      },
+      userButtonPopoverActionButtonText: {
+        color: isLight ? '#0f0f1a' : '#f0f0ff',
+        fontSize: '14px',
+      },
+      userButtonPopoverFooter: { display: 'none' },
     },
+    layout: { unsafe_disableDevelopmentModeWarnings: true },
   }
 
   return (

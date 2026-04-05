@@ -3,15 +3,22 @@
 import { SignIn } from '@clerk/nextjs'
 import { useEffect, useState } from 'react'
 
-const clerkElements = {
+const getClerkElements = (isLight: boolean) => ({
   card: { boxShadow: 'none', border: 'none', background: 'transparent', padding: '0' },
-  rootBox: { width: '100%' },
-}
+  rootBox: { width: '100%', overflow: 'visible' },
+  cardBox: { width: '100%', boxShadow: 'none', overflow: 'visible' },
+  header: { display: 'none' },
+  main: { padding: '0' },
+  footer: { padding: '0', background: 'transparent' },
+  socialButtonsBlockButton: { border: `1px solid ${isLight ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.25)'}`, background: isLight ? '#ffffff' : '#22222e' },
+  socialButtonsBlockButtonText: { color: 'var(--text-primary)', fontWeight: 500 },
+  formFieldInput: { border: `1px solid ${isLight ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.25)'}`, color: 'var(--text-primary)' },
+})
 
 const darkVars = {
   colorPrimary: '#6366f1',
   colorBackground: '#0a0a0f',
-  colorInputBackground: '#16161f',
+  colorInputBackground: '#22222e',
   colorInputText: '#f0f0ff',
   colorText: '#f0f0ff',
   colorTextSecondary: '#8888aa',
@@ -27,7 +34,7 @@ const lightVars = {
   colorInputText: '#0f0f1a',
   colorText: '#0f0f1a',
   colorTextSecondary: '#555570',
-  colorNeutral: '#e0e0f0',
+  colorNeutral: '#a0a0b8',
   borderRadius: '12px',
   fontFamily: 'var(--font-inter), Inter, system-ui, sans-serif',
 }
@@ -97,7 +104,7 @@ export default function SignInPage() {
         <SignIn
           appearance={{
             variables: isLight ? lightVars : darkVars,
-            elements: clerkElements,
+            elements: getClerkElements(isLight),
             layout: { unsafe_disableDevelopmentModeWarnings: true },
           }}
         />
