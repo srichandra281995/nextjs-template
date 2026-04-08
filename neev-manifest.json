@@ -23,7 +23,7 @@
     "app/page.tsx": "Home page — redirects to /dashboard if signed in, shows centered sign-in button if signed out. No branding or placeholder content.",
     "app/sign-in/[[...sign-in]]/page.tsx": "Clerk catch-all sign-in page with dark theme appearance config",
     "app/sign-up/[[...sign-up]]/page.tsx": "Clerk catch-all sign-up page with dark theme appearance config",
-    "components/header.tsx": "Sticky glass header (Client Component) — left: app name from NEXT_PUBLIC_APP_NAME, right: ThemeToggle button (adds/removes .light class on html, persists to localStorage) + Clerk UserButton (signed in) or sign-in link (signed out)",
+    "components/header.tsx": "Sticky glass header (Client Component) — left: app name from NEXT_PUBLIC_APP_NAME, right: ThemeToggle button + Clerk UserButton (signed in) or sign-in link (signed out). ALREADY HANDLES: user avatar, email display (via UserButton dropdown), and sign-out. If any ticket requires showing user email or a sign-out button — this file already satisfies it. Do NOT add additional email display or sign-out buttons anywhere in the app.",
     "lib/supabase/client.ts": "Supabase browser client using createBrowserClient from @supabase/ssr — for use in Client Components only",
     "lib/supabase/server.ts": "Supabase server client using createServerClient with async cookies() from next/headers — for Route Handlers and Server Components",
     "lib/toast.ts": "showToast helper wrapping sonner — showToast.success/error/loading/dismiss",

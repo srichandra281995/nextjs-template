@@ -732,6 +732,20 @@ Clerk UI components are themed via the `appearance` prop. Always use the dark th
 />
 ```
 
+### What the template Header already provides — DO NOT duplicate
+
+The `components/header.tsx` already includes:
+- `<UserButton>` — shows user avatar, and when clicked: displays email + sign-out option
+- `<SignedIn>` / `<SignedOut>` conditional rendering
+- Theme toggle
+
+**Rules for AI agents:**
+- NEVER add a sign-out button anywhere in the app — UserButton already has it
+- NEVER add inline email display to any nav or header — UserButton already shows it on click
+- NEVER modify `components/header.tsx` unless the ticket explicitly says to change the header
+- If a ticket says "show user email in nav" — the UserButton already satisfies this. No code needed.
+
+
 ### Environment variables (Clerk)
 
 ```bash
