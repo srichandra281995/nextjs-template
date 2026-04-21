@@ -102,6 +102,7 @@ export default function SignInPage() {
         </div>
 
         <SignIn
+          signUpUrl="/sign-up"
           appearance={{
             variables: isLight ? lightVars : darkVars,
             elements: getClerkElements(isLight),

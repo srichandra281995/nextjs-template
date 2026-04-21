@@ -82,8 +82,10 @@
 /
 ├── app/
 │   ├── globals.css                          # All CSS variables, component classes, utilities
-│   ├── layout.tsx                           # Root layout: ClerkProvider, Inter font, dark class
-│   ├── page.tsx                             # Landing page (public)
+│   ├── layout.tsx                           # Root layout: ClerkProvider, Inter font, dark class on html. No Header.
+│   ├── page.tsx                             # Public landing page — own custom nav, no shared Header
+│   ├── dashboard/
+│   │   └── layout.tsx                       # Dashboard layout: renders Header above all authenticated pages
 │   ├── sign-in/
 │   │   └── [[...sign-in]]/
 │   │       └── page.tsx                     # Clerk catch-all sign-in route
@@ -92,7 +94,9 @@
 │           └── page.tsx                     # Clerk catch-all sign-up route
 │
 ├── components/
-│   └── header.tsx                           # Sticky glass header with Clerk auth state
+│   ├── header.tsx                           # Sticky glass header — rendered by app/dashboard/layout.tsx for ALL apps
+│   └── layout/
+│       └── Sidebar.tsx                      # Sidebar nav component — ONLY for NAV_DECISION: SIDEBAR apps. Never modify directly.
 │
 ├── lib/
 │   └── supabase/
@@ -647,17 +651,22 @@ export default function SomePage() {
 ### Layout component pattern
 
 ```tsx
-// app/dashboard/layout.tsx
+// app/dashboard/layout.tsx — already exists in template, DO NOT recreate
+import { Header } from '@/components/header'
+
 export default function DashboardLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <div className="container-page py-8">
-      {children}
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <Header />
+      <main style={{ flex: 1 }}>{children}</main>
     </div>
   )
 }
 ```
+
+ALL authenticated pages must live under `app/dashboard/` to inherit this layout and get the Header automatically. Never place authenticated pages at `app/settings/`, `app/billing/`, or any other top-level path — they will not receive the Header.
 
 ### Metadata
 
@@ -734,17 +743,168 @@ Clerk UI components are themed via the `appearance` prop. Always use the dark th
 
 ### What the template Header already provides — DO NOT duplicate
 
-The `components/header.tsx` already includes:
+`components/header.tsx` is rendered automatically by `app/dashboard/layout.tsx` for all pages under `app/dashboard/`. It already includes:
 - `<UserButton>` — shows user avatar, and when clicked: displays email + sign-out option
 - `<SignedIn>` / `<SignedOut>` conditional rendering
 - Theme toggle
 
 **Rules for AI agents:**
+- NEVER import or render `<Header />` inside any page.tsx file — `app/dashboard/layout.tsx` already renders it
+- NEVER render `<Header />` in `app/page.tsx` — the landing page has its own custom nav
 - NEVER add a sign-out button anywhere in the app — UserButton already has it
 - NEVER add inline email display to any nav or header — UserButton already shows it on click
 - NEVER modify `components/header.tsx` unless the ticket explicitly says to change the header
 - If a ticket says "show user email in nav" — the UserButton already satisfies this. No code needed.
 
+### Adding custom menu items to UserButton (e.g. Billing link)
+
+When a ticket requires adding a custom link to the UserButton dropdown (e.g. a Billing page), use Clerk's `UserButton.MenuItems` + `UserButton.Link` pattern. This is the ONLY correct way — never use the `appearance` object for custom menu items.
+
+```tsx
+// In components/header.tsx — add CreditCard import from lucide-react, then:
+import { CreditCard } from 'lucide-react'
+
+// Wrap the existing <UserButton> like this:
+<UserButton appearance={userButtonAppearance}>
+  <UserButton.MenuItems>
+    <UserButton.Link
+      label="Billing"
+      labelIcon={<CreditCard size={16} />}
+      href="/dashboard/billing"
+    />
+  </UserButton.MenuItems>
+</UserButton>
+```
+
+**Rules:**
+- The `appearance` prop stays on `<UserButton>` exactly as before — do not remove or move it
+- `UserButton.Link` renders above the default "Manage account" and "Sign out" items
+- `href` must be a route under `app/dashboard/` so it inherits the dashboard layout and Header
+- Only add this when the app has Stripe subscription billing — never for free or one-time payment apps
+- `labelIcon` must be a React element (not a component reference) — `{<CreditCard size={16} />}` not `{CreditCard}`
+
+### Navigation Patterns — Three Options
+
+The architect picks one of three patterns per app. The pattern is recorded in the architecture doc as `NAV_DECISION: NONE | TOP_NAV | SIDEBAR`. The nav ticket reads this tag and implements the correct pattern.
+
+**Settings and Billing are NEVER in any nav** — they live only in the UserButton dropdown (see UserButton.MenuItems above).
+
+**The Header always renders** for all three patterns — it provides logo, theme toggle, and UserButton. The difference is whether nav links are added to it (TOP_NAV), a sidebar is added below it (SIDEBAR), or nothing changes (NONE).
+
+---
+
+#### NAV_DECISION: NONE
+When: app has only one main dashboard section — a single-view tool, AI workspace, pure utility app.
+Result: no nav ticket. The default header (logo + theme toggle + UserButton) is sufficient.
+No code changes required for navigation.
+
+---
+
+#### NAV_DECISION: TOP_NAV
+When: 2–3 flat top-level sections of equal weight. Users switch between them frequently.
+Result: modify `components/header.tsx` to add nav links between the logo and right controls.
+
+The nav ticket modifies **only** `components/header.tsx`. The layout stays unchanged.
+
+```tsx
+// components/header.tsx — modifications for TOP_NAV
+// 1. Add import at top:
+import { usePathname } from 'next/navigation'
+
+// 2. Add navItems constant above the Header function:
+const navItems = [
+  { label: 'Dashboard', href: '/dashboard' },
+  { label: 'Reports', href: '/dashboard/reports' },
+  // ... app-specific items from architect doc
+]
+
+// 3. Inside Header function add:
+const pathname = usePathname()
+
+// 4. In JSX — insert between the logo Link and the right-side div:
+<nav style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+  {navItems.map((item) => {
+    const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        className="btn-ghost"
+        style={{ fontSize: '14px', color: isActive ? 'var(--accent)' : undefined }}
+      >
+        {item.label}
+      </Link>
+    )
+  })}
+</nav>
+```
+
+**Rules:**
+- NEVER rebuild the header from scratch — only insert the `<nav>` element
+- NEVER add icons to top nav links — text only
+- Active state: `var(--accent)` color on the link, no background
+- `pathname.startsWith(item.href + '/')` catches nested routes under that section
+
+---
+
+#### NAV_DECISION: SIDEBAR
+When: 3+ main sections, OR hierarchy exists (section → sub-pages), OR complex data-heavy tool (CRM, admin, project management).
+Result: modify `app/dashboard/layout.tsx` to add a sidebar next to the main content. **The Header still renders at the top** — it handles logo, theme toggle, and UserButton. The sidebar handles section navigation only.
+
+The layout structure becomes:
+```
+┌──────────────── Header (sticky, 60px) ────────────────┐
+│  Logo                           Theme  UserButton      │
+├─────────────┬─────────────────────────────────────────┤
+│             │                                           │
+│  Sidebar    │  Main content (flex-1, overflowY: auto)  │
+│  nav items  │                                           │
+│             │                                           │
+└─────────────┴─────────────────────────────────────────┘
+```
+
+The template provides `components/layout/Sidebar.tsx` — **never modify this component**. Configure it only via the `navItems` prop.
+
+```tsx
+// app/dashboard/layout.tsx — full replacement for SIDEBAR apps
+import { Header } from '@/components/header'
+import { Sidebar } from '@/components/layout/Sidebar'
+import { LayoutDashboard, Users, BarChart2 } from 'lucide-react'
+// Use lucide-react icons that genuinely match each section
+
+const NAV_ITEMS = [
+  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { label: 'Contacts', href: '/dashboard/contacts', icon: Users },
+  { label: 'Reports', href: '/dashboard/reports', icon: BarChart2 },
+  // ... app-specific items — never include Settings or Billing
+]
+
+export default function DashboardLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <Header />
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        <Sidebar navItems={NAV_ITEMS} />
+        <main style={{ flex: 1, overflowY: 'auto' }}>{children}</main>
+      </div>
+    </div>
+  )
+}
+```
+
+**Rules:**
+- NEVER add Settings or Billing to `NAV_ITEMS` — those go in UserButton only
+- NEVER remove the `<Header />` — it always stays at the top
+- NEVER modify `components/layout/Sidebar.tsx` directly — it is a template file
+- Use `lucide-react` icons that match the section's purpose
+- Order NAV_ITEMS by user importance — most visited section first
+
+**What `Sidebar.tsx` already does (zero code needed):**
+- Sticky below header at `top: 60px`, height `calc(100vh - 60px)`
+- Active route detection via `usePathname` — active link gets `var(--accent)` color + accent tinted bg
+- Glass morphism using `var(--surface)` + `var(--border)` CSS variables
 
 ### Environment variables (Clerk)
 
