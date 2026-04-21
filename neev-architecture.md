@@ -906,6 +906,72 @@ export default function DashboardLayout({
 - Active route detection via `usePathname` — active link gets `var(--accent)` color + accent tinted bg
 - Glass morphism using `var(--surface)` + `var(--border)` CSS variables
 
+### Multi-Role Bootstrap Pattern — CRITICAL FOR MULTI-ROLE APPS
+
+For any app where users have different roles (admin, member, owner, etc.), the following sequence is the ONLY correct implementation. Any deviation causes the user to land on /no-access after sign-up.
+
+**Step 1 — Sign-up page must set `afterSignUpUrl`**
+
+`app/sign-up/[[...sign-up]]/page.tsx` must pass `afterSignUpUrl` to the `<SignUp>` component pointing at the onboard page:
+```tsx
+<SignUp afterSignUpUrl="/onboard" appearance={...} />
+```
+Without this, Clerk redirects to `/` after sign-up and the user never reaches the onboard page.
+
+For apps with an invite flow: `afterSignUpUrl` must be a state variable (default `/onboard`) that reads `invite_token` from `window.location.search` in a `useEffect` and appends it: `/onboard?invite_token=XXX`. This preserves the token through Clerk's sign-up redirect so invited users reach `/invite/XXX`.
+
+**Step 2 — Onboard page = SERVER COMPONENT + OnboardClient = CLIENT COMPONENT**
+
+`app/onboard/page.tsx` is a SERVER COMPONENT (routing only). It reads sessionClaims to check for an existing role (redirect to dashboard if already bootstrapped), checks searchParams for `invite_token` (redirect to `/invite/token` if present), then renders `<OnboardClient>` for new admin users. `/onboard` MUST be in `isPublicRoute` — new users have no role when they land here.
+
+`app/onboard/onboardClient.tsx` is the CLIENT COMPONENT (`'use client'`). It calls the bootstrap server action then navigates.
+
+**Step 3 — Bootstrap API route writes role to Clerk publicMetadata**
+
+`app/api/bootstrap/route.ts` calls:
+```ts
+await clerkClient.users.updateUser(userId, { publicMetadata: { role, org_id } })
+```
+Then creates the user row in Supabase and returns success.
+
+**Step 4 — Client calls `session?.reload()` THEN navigates with `window.location.href`**
+
+After bootstrap succeeds in OnboardClient (and invite acceptance client):
+```ts
+await session?.reload()  // refreshes the JWT cookie so middleware sees the new role
+window.location.href = '/dashboard/admin'  // hard nav sends fresh JWT to middleware
+```
+`session?.reload()` refreshes the Clerk JWT in the browser cookie. `window.location.href` triggers a full HTTP request with the fresh JWT — middleware reads the role and routes correctly.
+
+**NEVER use `router.push()` after bootstrap** — soft navigation, middleware sees the stale (no-role) JWT and redirects to /no-access.
+
+**NEVER skip `session?.reload()`** — without it, `window.location.href` sends the old JWT and middleware sees no role.
+
+**Step 5 — Middleware routes based on sessionClaims**
+
+```ts
+const role = (sessionClaims?.metadata as { role?: string })?.role
+if (!role && pathname.startsWith('/dashboard')) {
+  return NextResponse.redirect(new URL('/onboard', request.url))
+}
+// role-specific redirects...
+```
+
+**Step 6 — Sign-in page must have `afterSignInUrl="/dashboard"` for returning users**
+
+For multi-role apps, `<SignIn>` MUST have `afterSignInUrl="/dashboard"` prop. After sign-in, the user hits `/dashboard`, middleware reads the role already in the JWT (returning users have it), and redirects to `/dashboard/admin` etc. Do NOT use env vars — `NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL` is deprecated.
+
+**Step 7 — Onboard page must be in `isPublicRoute`**
+
+```ts
+const isPublicRoute = createRouteMatcher([
+  '/',
+  '/sign-in(.*)',
+  '/sign-up(.*)',
+  '/onboard(.*)',  // ← required — user has no session role yet when they land here
+])
+```
+
 ### Environment variables (Clerk)
 
 ```bash
