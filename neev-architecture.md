@@ -85,7 +85,7 @@
 │   ├── layout.tsx                           # Root layout: ClerkProvider, Inter font, dark class on html. No Header.
 │   ├── page.tsx                             # Public landing page — own custom nav, no shared Header
 │   ├── dashboard/
-│   │   └── layout.tsx                       # Dashboard layout: renders Header above all authenticated pages
+│   │   └── layout.tsx                       # Dashboard layout: reads role, passes to DashboardShell (which renders Header + Sidebar)
 │   ├── sign-in/
 │   │   └── [[...sign-in]]/
 │   │       └── page.tsx                     # Clerk catch-all sign-in route
@@ -94,9 +94,10 @@
 │           └── page.tsx                     # Clerk catch-all sign-up route
 │
 ├── components/
-│   ├── header.tsx                           # Sticky glass header — rendered by app/dashboard/layout.tsx for ALL apps
+│   ├── header.tsx                           # Sticky glass header — used inside DashboardShell, never imported directly in pages
 │   └── layout/
-│       └── Sidebar.tsx                      # Sidebar nav component — ONLY for NAV_DECISION: SIDEBAR apps. Never modify directly.
+│       ├── DashboardShell.tsx               # Client component — composes Header + Sidebar + main. navItemsByRole is the only nav edit point.
+│       └── Sidebar.tsx                      # Sidebar nav — always rendered for all dashboard pages. Never modify directly.
 │
 ├── lib/
 │   └── supabase/
@@ -652,21 +653,17 @@ export default function SomePage() {
 
 ```tsx
 // app/dashboard/layout.tsx — already exists in template, DO NOT recreate
-import { Header } from '@/components/header'
+import { auth } from '@clerk/nextjs/server'
+import { DashboardShell } from '@/components/layout/DashboardShell'
 
-export default function DashboardLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <Header />
-      <main style={{ flex: 1 }}>{children}</main>
-    </div>
-  )
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { sessionClaims } = await auth()
+  const role = (sessionClaims?.metadata as { role?: string })?.role ?? null
+  return <DashboardShell role={role}>{children}</DashboardShell>
 }
 ```
 
-ALL authenticated pages must live under `app/dashboard/` to inherit this layout and get the Header automatically. Never place authenticated pages at `app/settings/`, `app/billing/`, or any other top-level path — they will not receive the Header.
+`DashboardShell` renders the Header, Sidebar, and scrollable main area. ALL authenticated pages must live under `app/dashboard/` — never place them at top-level paths like `app/settings/` or `app/billing/`.
 
 ### Metadata
 
@@ -743,13 +740,13 @@ Clerk UI components are themed via the `appearance` prop. Always use the dark th
 
 ### What the template Header already provides — DO NOT duplicate
 
-`components/header.tsx` is rendered automatically by `app/dashboard/layout.tsx` for all pages under `app/dashboard/`. It already includes:
+`components/header.tsx` is rendered automatically by `DashboardShell` (via `app/dashboard/layout.tsx`) for all pages under `app/dashboard/`. It already includes:
 - `<UserButton>` — shows user avatar, and when clicked: displays email + sign-out option
 - `<SignedIn>` / `<SignedOut>` conditional rendering
 - Theme toggle
 
 **Rules for AI agents:**
-- NEVER import or render `<Header />` inside any page.tsx file — `app/dashboard/layout.tsx` already renders it
+- NEVER import or render `<Header />` inside any page.tsx file — DashboardShell already renders it for all dashboard pages
 - NEVER render `<Header />` in `app/page.tsx` — the landing page has its own custom nav
 - NEVER add a sign-out button anywhere in the app — UserButton already has it
 - NEVER add inline email display to any nav or header — UserButton already shows it on click
@@ -783,128 +780,64 @@ import { CreditCard } from 'lucide-react'
 - Only add this when the app has Stripe subscription billing — never for free or one-time payment apps
 - `labelIcon` must be a React element (not a component reference) — `{<CreditCard size={16} />}` not `{CreditCard}`
 
-### Navigation Patterns — Three Options
+### Navigation Pattern — Always Sidebar
 
-The architect picks one of three patterns per app. The pattern is recorded in the architecture doc as `NAV_DECISION: NONE | TOP_NAV | SIDEBAR`. The nav ticket reads this tag and implements the correct pattern.
+All dashboard apps use a single navigation pattern: **always a sidebar**. There is no NAV_DECISION. The sidebar is always present regardless of how many sections the app has.
 
-**Settings and Billing are NEVER in any nav** — they live only in the UserButton dropdown (see UserButton.MenuItems above).
+**Settings and Billing are NEVER in the sidebar** — they live only in the UserButton dropdown (see UserButton.MenuItems above).
 
-**The Header always renders** for all three patterns — it provides logo, theme toggle, and UserButton. The difference is whether nav links are added to it (TOP_NAV), a sidebar is added below it (SIDEBAR), or nothing changes (NONE).
+**Layout structure (all apps):**
+```
+┌────────────────────────────────────────────────────┐
+│  Header (sticky, 60px) — theme toggle + UserButton  │
+│  Mobile: hamburger + app name on left               │
+├──────────────┬─────────────────────────────────────┤
+│              │                                       │
+│   Sidebar    │   Main content (flex-1, overflow-y)  │
+│   nav items  │   padding: 40px 24px                 │
+│              │                                       │
+└──────────────┴─────────────────────────────────────┘
+```
 
----
+**Sidebar behaviour (built in — zero code needed):**
+- Desktop expanded: 220px wide, icon + label
+- Desktop collapsed: 60px wide, icon only (title tooltip on hover), toggle is a small circle button on the right border line — persisted to `localStorage`
+- Mobile: fixed overlay below header, slides in/out via hamburger toggle, closes on backdrop tap
+- Active route detection via `usePathname` — active link gets `var(--accent)` + accent tinted background
+- Collapsed state is desktop-only — mobile always shows full sidebar regardless
 
-#### NAV_DECISION: NONE
-When: app has only one main dashboard section — a single-view tool, AI workspace, pure utility app.
-Result: no nav ticket. The default header (logo + theme toggle + UserButton) is sufficient.
-No code changes required for navigation.
-
----
-
-#### NAV_DECISION: TOP_NAV
-When: 2–3 flat top-level sections of equal weight. Users switch between them frequently.
-Result: modify `components/header.tsx` to add nav links between the logo and right controls.
-
-The nav ticket modifies **only** `components/header.tsx`. The layout stays unchanged.
+**The only edit point for nav: `navItemsByRole` in `components/layout/DashboardShell.tsx`**
 
 ```tsx
-// components/header.tsx — modifications for TOP_NAV
-// 1. Add import at top:
-import { usePathname } from 'next/navigation'
+// components/layout/DashboardShell.tsx — edit ONLY this map
+const navItemsByRole: Record<string, NavItem[]> = {
+  // Single-role apps: use only the 'default' key
+  default: [
+    { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  ],
 
-// 2. Add navItems constant above the Header function:
-const navItems = [
-  { label: 'Dashboard', href: '/dashboard' },
-  { label: 'Reports', href: '/dashboard/reports' },
-  // ... app-specific items from architect doc
-]
-
-// 3. Inside Header function add:
-const pathname = usePathname()
-
-// 4. In JSX — insert between the logo Link and the right-side div:
-<nav style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-  {navItems.map((item) => {
-    const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
-    return (
-      <Link
-        key={item.href}
-        href={item.href}
-        className="btn-ghost"
-        style={{ fontSize: '14px', color: isActive ? 'var(--accent)' : undefined }}
-      >
-        {item.label}
-      </Link>
-    )
-  })}
-</nav>
-```
-
-**Rules:**
-- NEVER rebuild the header from scratch — only insert the `<nav>` element
-- NEVER add icons to top nav links — text only
-- Active state: `var(--accent)` color on the link, no background
-- `pathname.startsWith(item.href + '/')` catches nested routes under that section
-
----
-
-#### NAV_DECISION: SIDEBAR
-When: 3+ main sections, OR hierarchy exists (section → sub-pages), OR complex data-heavy tool (CRM, admin, project management).
-Result: modify `app/dashboard/layout.tsx` to add a sidebar next to the main content. **The Header still renders at the top** — it handles logo, theme toggle, and UserButton. The sidebar handles section navigation only.
-
-The layout structure becomes:
-```
-┌──────────────── Header (sticky, 60px) ────────────────┐
-│  Logo                           Theme  UserButton      │
-├─────────────┬─────────────────────────────────────────┤
-│             │                                           │
-│  Sidebar    │  Main content (flex-1, overflowY: auto)  │
-│  nav items  │                                           │
-│             │                                           │
-└─────────────┴─────────────────────────────────────────┘
-```
-
-The template provides `components/layout/Sidebar.tsx` — **never modify this component**. Configure it only via the `navItems` prop.
-
-```tsx
-// app/dashboard/layout.tsx — full replacement for SIDEBAR apps
-import { Header } from '@/components/header'
-import { Sidebar } from '@/components/layout/Sidebar'
-import { LayoutDashboard, Users, BarChart2 } from 'lucide-react'
-// Use lucide-react icons that genuinely match each section
-
-const NAV_ITEMS = [
-  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Contacts', href: '/dashboard/contacts', icon: Users },
-  { label: 'Reports', href: '/dashboard/reports', icon: BarChart2 },
-  // ... app-specific items — never include Settings or Billing
-]
-
-export default function DashboardLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <Header />
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        <Sidebar navItems={NAV_ITEMS} />
-        <main style={{ flex: 1, overflowY: 'auto' }}>{children}</main>
-      </div>
-    </div>
-  )
+  // Multi-role apps: add one key per role
+  // admin: [
+  //   { label: 'Dashboard', href: '/dashboard/admin', icon: LayoutDashboard },
+  //   { label: 'Team',      href: '/dashboard/admin/team', icon: Users },
+  // ],
+  // manager: [
+  //   { label: 'Dashboard', href: '/dashboard/manager', icon: LayoutDashboard },
+  //   { label: 'Reports',   href: '/dashboard/manager/reports', icon: BarChart2 },
+  // ],
 }
 ```
 
 **Rules:**
-- NEVER add Settings or Billing to `NAV_ITEMS` — those go in UserButton only
-- NEVER remove the `<Header />` — it always stays at the top
-- NEVER modify `components/layout/Sidebar.tsx` directly — it is a template file
-- Use `lucide-react` icons that match the section's purpose
-- Order NAV_ITEMS by user importance — most visited section first
-
-**What `Sidebar.tsx` already does (zero code needed):**
-- Sticky below header at `top: 60px`, height `calc(100vh - 60px)`
-- Active route detection via `usePathname` — active link gets `var(--accent)` color + accent tinted bg
-- Glass morphism using `var(--surface)` + `var(--border)` CSS variables
+- ALWAYS include `{ label: 'Dashboard', href: '...', icon: LayoutDashboard }` as the first item for every role
+- NEVER add Settings or Billing to nav items — UserButton only
+- NEVER modify `components/layout/Sidebar.tsx` directly
+- NEVER modify `app/dashboard/layout.tsx` for nav — it only passes `role` to DashboardShell
+- Use `lucide-react` icons that genuinely match each section's purpose
+- Order items by user importance — most visited section first
+- For multi-role apps: each role key must match exactly what is written to Clerk `publicMetadata.role` in the bootstrap route
+- For multi-role apps: if a page is visible to only one role, add it to ONLY that role's array — a manager-only Reports page goes in `navItemsByRole['manager']` only, never in `navItemsByRole['admin']`
+- Icon imports (`lucide-react`) belong at the top of `DashboardShell.tsx` — NEVER in `app/dashboard/layout.tsx` (Server Component). Passing icon functions across the Server→Client boundary causes the Next.js 15 "Functions Cannot Be Passed" crash.
 
 ### Multi-Role Bootstrap Pattern — CRITICAL FOR MULTI-ROLE APPS
 
@@ -1062,6 +995,149 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 ```
 
 Both are `NEXT_PUBLIC_` because they are used in both client and server code. The anon key is safe to expose — Row Level Security (RLS) on Supabase tables enforces data access.
+
+### Supabase Realtime
+
+Realtime is built into `@supabase/supabase-js` — no additional package required. Always use the browser client (`lib/supabase/client.ts`) for all channel subscriptions.
+
+**Two patterns — pick based on the feature:**
+
+| Pattern | When to use | Stored in DB? | RLS applies? |
+|---|---|---|---|
+| **Broadcast** | Ephemeral updates all subscribers see — live location, live news feed, presence, typing indicators | No | No |
+| **Postgres Changes** | DB write should notify subscribed clients instantly — seat/room booking, order status, notifications | Yes | Yes |
+
+**Broadcast — sender hook:**
+
+```tsx
+// hooks/useXxxSender.ts
+'use client'
+import { useEffect, useRef } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import type { RealtimeChannel } from '@supabase/supabase-js'
+
+export function useXxxSender(channelName: string) {
+  const channelRef = useRef<RealtimeChannel | null>(null)
+  const supabase = createClient()
+
+  useEffect(() => {
+    const channel = supabase.channel(channelName)
+    channel.subscribe()
+    channelRef.current = channel
+    return () => { void supabase.removeChannel(channel) }
+  }, [channelName])
+
+  const send = (event: string, payload: Record<string, unknown>): void => {
+    if (!channelRef.current) return
+    void channelRef.current.send({ type: 'broadcast', event, payload })
+  }
+  return { send }
+}
+```
+
+**Broadcast — receiver hook:**
+
+```tsx
+// hooks/useXxxReceiver.ts
+'use client'
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
+
+export function useXxxReceiver<T>(channelName: string, event: string) {
+  const [data, setData] = useState<T | null>(null)
+  const [isConnected, setIsConnected] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const supabase = createClient()
+    const channel = supabase
+      .channel(channelName)
+      .on('broadcast', { event }, (message: { payload: T }) => {
+        setData(message.payload)
+      })
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') setIsConnected(true)
+        else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          setError('Live connection lost — refresh to reconnect')
+          setIsConnected(false)
+        }
+      })
+    return () => { void supabase.removeChannel(channel) }
+  }, [channelName, event])
+
+  return { data, isConnected, error }
+}
+```
+
+**Postgres Changes — subscriber hook:**
+
+```tsx
+// hooks/useXxxChanges.ts
+'use client'
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import type { RealtimePostgresInsertPayload } from '@supabase/supabase-js'
+
+export function useXxxChanges<T extends Record<string, unknown>>(
+  table: string,
+  filterColumn?: string,
+  filterValue?: string
+) {
+  const [rows, setRows] = useState<T[]>([])
+  const [isConnected, setIsConnected] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const supabase = createClient()
+    const channelName = filterValue ? (table + '-' + filterValue) : table
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table,
+          ...(filterColumn && filterValue ? { filter: filterColumn + '=eq.' + filterValue } : {}),
+        },
+        (payload: RealtimePostgresInsertPayload<T>) => {
+          setRows((prev) => [payload.new, ...prev])
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') setIsConnected(true)
+        else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          setError('Live updates paused — refresh to reconnect')
+          setIsConnected(false)
+        }
+      })
+    return () => { void supabase.removeChannel(channel) }
+  }, [table, filterColumn, filterValue])
+
+  return { rows, isConnected, error }
+}
+```
+
+For `UPDATE` or `DELETE` events swap `event: 'INSERT'` and update the payload import to `RealtimePostgresUpdatePayload` / `RealtimePostgresDeletePayload` accordingly.
+
+**Live indicator dot** — `animate-ping` is already in `tailwind.config.ts` (see Section 12):
+
+```tsx
+{isConnected && (
+  <span className="relative flex h-2 w-2">
+    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+    <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
+  </span>
+)}
+```
+
+**Rules:**
+- Every realtime subscription lives in `hooks/` — never inline channel logic in a component
+- `void supabase.removeChannel(channel)` in every `useEffect` cleanup — `void` is mandatory, `removeChannel` returns a Promise and ESLint will fail the build without it
+- NEVER use Supabase Realtime in API routes or Server Components — browser client only
+- Broadcast channels are public to all authenticated users — never put sensitive per-user data in a broadcast payload; use Postgres Changes with RLS instead
+- For Postgres Changes: the subscribing user must be signed in AND your RLS `SELECT` policy must allow `auth.uid()` — without a matching policy the subscription connects but returns no events (silent failure)
+- Scope per-resource channels: `'bookings-' + roomId` prevents two users watching different rooms from sharing a channel. Share a single channel name for global broadcast streams like `'live-feed'`.
 
 ---
 

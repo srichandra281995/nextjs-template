@@ -3,10 +3,15 @@
 import Link from 'next/link'
 import { SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
 import { useEffect, useState } from 'react'
+import { Menu } from 'lucide-react'
 
 const appName = process.env.NEXT_PUBLIC_APP_NAME ?? 'App'
 
-export function Header() {
+interface HeaderProps {
+  onMobileMenuOpen?: () => void
+}
+
+export function Header({ onMobileMenuOpen }: HeaderProps) {
   const [isLight, setIsLight] = useState(false)
 
   useEffect(() => {
@@ -27,7 +32,6 @@ export function Header() {
       html.classList.add('light')
       localStorage.setItem('theme', 'light')
     }
-    // state updates via the MutationObserver above
   }
 
   const userButtonAppearance = {
@@ -84,32 +88,53 @@ export function Header() {
       <div
         style={{
           width: '100%',
-          maxWidth: '1280px',
-          margin: '0 auto',
-          padding: '0 24px',
+          padding: '0 16px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: '16px',
         }}
       >
-        {/* Logo */}
-        <Link
-          href="/"
-          style={{
-            fontWeight: 600,
-            fontSize: '15px',
-            color: 'var(--text-primary)',
-            textDecoration: 'none',
-            letterSpacing: '-0.01em',
-          }}
-        >
-          {appName}
-        </Link>
+        {/* Left side: hamburger (mobile only) + app name (always) */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          {/* Hamburger — mobile only, no inline display so md:hidden works */}
+          {onMobileMenuOpen && (
+            <div className="flex md:hidden">
+              <button
+                onClick={onMobileMenuOpen}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '8px',
+                  background: 'transparent',
+                  border: 'none',
+                  borderRadius: '12px',
+                  color: 'var(--text-secondary)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+                aria-label="Open navigation menu"
+              >
+                <Menu size={18} />
+              </button>
+            </div>
+          )}
+          <Link
+            href="/"
+            style={{
+              fontWeight: 600,
+              fontSize: '15px',
+              color: 'var(--text-primary)',
+              textDecoration: 'none',
+              letterSpacing: '-0.01em',
+            }}
+          >
+            {appName}
+          </Link>
+        </div>
 
-        {/* Right side */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {/* Theme toggle */}
+        {/* Right side: theme toggle + auth — always visible */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto' }}>
           <button
             onClick={toggleTheme}
             className="btn-ghost"

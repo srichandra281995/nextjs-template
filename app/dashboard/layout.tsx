@@ -1,12 +1,9 @@
-import { Header } from '@/components/header'
+import { auth } from '@clerk/nextjs/server'
+import { DashboardShell } from '@/components/layout/DashboardShell'
 
-export default function DashboardLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <Header />
-      <main style={{ flex: 1 }}>{children}</main>
-    </div>
-  )
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { sessionClaims } = await auth()
+  const role = (sessionClaims?.metadata as { role?: string })?.role ?? null
+
+  return <DashboardShell role={role}>{children}</DashboardShell>
 }
