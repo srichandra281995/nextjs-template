@@ -140,7 +140,7 @@
 **Path alias:** `@/*` resolves to the project root. Use it for all internal imports.
 ```ts
 import { Header } from '@/components/header'
-import { createClient } from '@/lib/supabase/server'
+import { supabaseAdmin } from '@/lib/supabase/service'
 ```
 
 ---
@@ -948,45 +948,6 @@ export function MyComponent() {
 }
 ```
 
-### Server client — `lib/supabase/server.ts`
-
-```ts
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
-import { cookies } from 'next/headers'
-
-export async function createClient() {
-  const cookieStore = await cookies()  // Next.js 15: cookies() is async
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() { return cookieStore.getAll() },
-        setAll(cookiesToSet: { name: string; value: string; options?: CookieOptions }[]) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
-          } catch {
-            // Called from Server Component — read-only. Middleware handles refresh.
-          }
-        },
-      },
-    }
-  )
-}
-```
-
-Use in: Server Components, Server Actions, Route Handlers.
-```tsx
-// app/dashboard/page.tsx
-import { createClient } from '@/lib/supabase/server'
-
-export default async function DashboardPage() {
-  const supabase = await createClient()
-  const { data } = await supabase.from('table').select()
-  // ...
-}
-```
-
 ### Environment variables (Supabase)
 
 ```bash
@@ -1187,7 +1148,7 @@ For `UPDATE` or `DELETE` events swap `event: 'INSERT'` and update the payload im
 ### Error handling
 
 - In Server Components and Server Actions, handle database/API errors explicitly — do not let them bubble to the client unhandled.
-- The `setAll` catch block in `lib/supabase/server.ts` is intentional — Server Components cannot set cookies, and this is handled by middleware.
+- Always use `supabaseAdmin` from `@/lib/supabase/service` in API routes and Server Components — never use the anon key client server-side.
 - Supabase queries return `{ data, error }` — always check `error` before using `data`.
 
 ---
